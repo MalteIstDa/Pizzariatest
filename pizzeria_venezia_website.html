@@ -1,0 +1,973 @@
+<!DOCTYPE html><html lang="de" class="scroll-smooth"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pizzeria Venezia | Online Bestellen</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'venezia-orange': '#e58e1a',
+                        'venezia-dark': '#1a1a1a',
+                        'venezia-black': '#0a0a0a',
+                        'venezia-light': '#fdfaf6',
+                        'venezia-gray': '#2a2a2a'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif'],
+                        'display': ['"Bebas Neue"', 'Oswald', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #fdfaf6;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        
+        h1, h2, h3, .font-display {
+            font-family: 'Bebas Neue', sans-serif;
+            letter-spacing: 0.05em;
+        }
+
+        .hero-bg {
+            background-image: linear-gradient(rgba(10, 10, 10, 0.75), rgba(10, 10, 10, 0.95)), url('https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=2070&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        .btn-glow {
+            transition: all 0.3s ease;
+        }
+        .btn-glow:hover {
+            box-shadow: 0 0 15px rgba(229, 142, 26, 0.6);
+            transform: translateY(-1px);
+        }
+
+        /* Cart Sidebar & Custom Scrollbar */
+        #cart-sidebar {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .cart-open {
+            transform: translateX(0);
+        }
+        .cart-closed {
+            transform: translateX(100%);
+        }
+
+        /* Modal Animations */
+        #config-modal {
+            transition: opacity 0.2s ease-in-out;
+        }
+        #config-modal .modal-content {
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: scale(0.95) translateY(20px);
+        }
+        #config-modal:not(.hidden) .modal-content {
+            transform: scale(1) translateY(0);
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a2a2a;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #e58e1a;
+        }
+
+        /* Checkbox Styling */
+        .custom-checkbox {
+            appearance: none;
+            background-color: transparent;
+            margin: 0;
+            font: inherit;
+            color: currentColor;
+            width: 1.25em;
+            height: 1.25em;
+            border: 2px solid #4b5563;
+            border-radius: 0.25em;
+            display: grid;
+            place-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .custom-checkbox::before {
+            content: "\f00c";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            font-size: 0.75rem;
+            transform: scale(0);
+            transition: 120ms transform ease-in-out;
+            color: #0a0a0a;
+        }
+        .custom-checkbox:checked {
+            background-color: #e58e1a;
+            border-color: #e58e1a;
+        }
+        .custom-checkbox:checked::before {
+            transform: scale(1);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Navigation Header -->
+    <header class="sticky top-0 z-40 bg-venezia-black/95 border-b border-venezia-gray backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <a href="#" class="flex items-center space-x-2">
+                <span class="text-3xl font-display text-white tracking-widest">PIZZERIA <span class="text-venezia-orange">VENEZIA</span></span>
+            </a>
+            
+            <nav class="hidden md:flex items-center space-x-8 text-sm font-semibold uppercase tracking-wider">
+                <a href="#menu" class="hover:text-venezia-orange transition-colors">Speisekarte</a>
+                <a href="#about" class="hover:text-venezia-orange transition-colors">Über Uns</a>
+                <a href="#contact" class="hover:text-venezia-orange transition-colors">Kontakt & Zeiten</a>
+            </nav>
+
+            <div class="flex items-center space-x-4">
+                <button onclick="toggleCart()" class="relative p-3 bg-venezia-dark hover:bg-venezia-gray rounded-full transition-colors group">
+                    <i class="fa-solid fa-basket-shopping text-xl text-white group-hover:text-venezia-orange transition-colors"></i>
+                    <span id="cart-count" class="absolute -top-1 -right-1 bg-venezia-orange text-venezia-black font-bold text-xs w-5 h-5 rounded-full flex items-center justify-center">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-bg min-h-[60vh] flex items-center relative py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full text-center md:text-left z-10">
+            <div class="max-w-2xl">
+                <span class="text-venezia-orange uppercase font-bold tracking-widest text-sm sm:text-base">Echte italienische Tradition</span>
+                <h1 class="text-5xl sm:text-7xl lg:text-8xl text-white my-4 leading-tight">Steinofenpizza<br>wie in <span class="text-venezia-orange">Venezia</span></h1>
+                <p class="text-gray-300 text-base sm:text-lg mb-8 max-w-xl">
+                    Hausgemachter Teig, 72 Stunden Reifezeit, frischeste Zutaten und echtes Buchenholzfeuer für den unvergleichlichen Geschmack.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+                    <a href="#menu" class="btn-glow bg-venezia-orange text-venezia-black px-8 py-4 font-bold rounded-lg flex items-center justify-center gap-2">
+                        Jetzt bestellen <i class="fa-solid fa-arrow-down"></i>
+                    </a>
+                    <a href="#about" class="bg-transparent hover:bg-venezia-dark text-white border border-venezia-gray px-8 py-4 font-bold rounded-lg transition-all text-center">
+                        Unsere Story
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-venezia-black to-transparent"></div>
+    </section>
+
+    <!-- Info Banner (Fast order, delivery, quality) -->
+    <section class="bg-venezia-dark border-y border-venezia-gray py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-6 text-center md:text-left">
+            <div class="flex flex-col md:flex-row items-center gap-4 p-4">
+                <div class="w-12 h-12 bg-venezia-orange/10 border border-venezia-orange/30 rounded-full flex items-center justify-center text-venezia-orange text-xl shrink-0">
+                    <i class="fa-solid fa-truck-ramp-box"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white uppercase">Schnelle Lieferung</h3>
+                    <p class="text-gray-400 text-sm">Frisch & heiß in 30-45 Minuten bei Ihnen</p>
+                </div>
+            </div>
+            <div class="flex flex-col md:flex-row items-center gap-4 p-4 border-y md:border-y-0 md:border-x border-venezia-gray">
+                <div class="w-12 h-12 bg-venezia-orange/10 border border-venezia-orange/30 rounded-full flex items-center justify-center text-venezia-orange text-xl shrink-0">
+                    <i class="fa-solid fa-pizza-slice"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white uppercase">Premium Zutaten</h3>
+                    <p class="text-gray-400 text-sm">Original Fior di Latte & San Marzano Tomaten</p>
+                </div>
+            </div>
+            <div class="flex flex-col md:flex-row items-center gap-4 p-4">
+                <div class="w-12 h-12 bg-venezia-orange/10 border border-venezia-orange/30 rounded-full flex items-center justify-center text-venezia-orange text-xl shrink-0">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white uppercase">Einfache Bezahlung</h3>
+                    <p class="text-gray-400 text-sm">Bar, PayPal, Kreditkarte direkt im Checkout</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Food Menu Section -->
+    <main id="menu" class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 w-full">
+        <div class="text-center mb-12">
+            <span class="text-venezia-orange uppercase font-bold tracking-widest text-xs">Frisch zubereitet</span>
+            <h2 class="text-4xl sm:text-6xl text-white mt-1">Unsere Speisekarte</h2>
+            <div class="w-24 h-1 bg-venezia-orange mx-auto mt-4 rounded-full"></div>
+        </div>
+
+        <!-- Category Filter -->
+        <div class="flex flex-wrap justify-center gap-2 mb-12" id="category-tabs">
+            <button onclick="filterCategory('all')" id="tab-all" class="category-btn active px-6 py-2.5 rounded-full font-bold uppercase text-xs tracking-wider border border-venezia-orange bg-venezia-orange text-venezia-black transition-all">
+                Alle Gerichte
+            </button>
+            <button onclick="filterCategory('pizza')" id="tab-pizza" class="category-btn px-6 py-2.5 rounded-full font-bold uppercase text-xs tracking-wider border border-venezia-gray bg-venezia-dark text-white hover:border-venezia-orange hover:text-venezia-orange transition-all">
+                Pizza
+            </button>
+            <button onclick="filterCategory('pasta')" id="tab-pasta" class="category-btn px-6 py-2.5 rounded-full font-bold uppercase text-xs tracking-wider border border-venezia-gray bg-venezia-dark text-white hover:border-venezia-orange hover:text-venezia-orange transition-all">
+                Pasta
+            </button>
+            <button onclick="filterCategory('salad')" id="tab-salad" class="category-btn px-6 py-2.5 rounded-full font-bold uppercase text-xs tracking-wider border border-venezia-gray bg-venezia-dark text-white hover:border-venezia-orange hover:text-venezia-orange transition-all">
+                Salate
+            </button>
+            <button onclick="filterCategory('dessert')" id="tab-dessert" class="category-btn px-6 py-2.5 rounded-full font-bold uppercase text-xs tracking-wider border border-venezia-gray bg-venezia-dark text-white hover:border-venezia-orange hover:text-venezia-orange transition-all">
+                Dessert
+            </button>
+            <button onclick="filterCategory('drink')" id="tab-drink" class="category-btn px-6 py-2.5 rounded-full font-bold uppercase text-xs tracking-wider border border-venezia-gray bg-venezia-dark text-white hover:border-venezia-orange hover:text-venezia-orange transition-all">
+                Getränke
+            </button>
+        </div>
+
+        <!-- Menu Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="menu-grid">
+            <!-- Dynamic Injection of Items via JS -->
+        </div>
+    </main>
+
+    <!-- Custom Toast Notification Box -->
+    <div id="toast" class="fixed bottom-6 left-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 max-w-sm w-full bg-venezia-dark border-l-4 border-venezia-orange text-white p-4 rounded-r-lg shadow-2xl flex items-center space-x-3 pointer-events-none">
+        <div class="w-8 h-8 bg-venezia-orange/10 rounded-full flex items-center justify-center text-venezia-orange shrink-0">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div>
+            <p id="toast-message" class="text-sm font-semibold">Erfolgreich hinzugefügt!</p>
+        </div>
+    </div>
+
+    <!-- Pizzakonfigurator Modal -->
+    <div id="config-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden transition-opacity">
+        <div class="modal-content bg-venezia-dark border border-venezia-gray w-full max-w-xl rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            <!-- Header -->
+            <div class="p-6 border-b border-venezia-gray flex justify-between items-start">
+                <div>
+                    <span class="text-xs text-venezia-orange uppercase font-bold tracking-widest">Verfeinere dein Gericht</span>
+                    <h3 id="modal-item-title" class="text-3xl text-white font-display">Pizza Margherita</h3>
+                </div>
+                <button onclick="closeConfigurator()" class="text-gray-400 hover:text-white p-1 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <!-- Body -->
+            <div class="p-6 overflow-y-auto space-y-6 flex-grow">
+                <div>
+                    <h4 class="text-xs uppercase tracking-wider text-gray-400 font-bold mb-4">Zusätzliche Zutaten (+1.50€ / Knoblauch +0.50€)</h4>
+                    <div class="grid grid-cols-2 gap-3" id="toppings-container">
+                        <!-- Dynamic Toppings loaded here -->
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-xs uppercase tracking-wider text-gray-400 font-bold mb-3">Spezielle Wünsche / Notizen</h4>
+                    <textarea id="modal-notes" placeholder="z.B. Bitte extra knusprig backen..." class="w-full bg-venezia-black border border-venezia-gray rounded-lg p-3 text-sm text-white focus:outline-none focus:border-venezia-orange h-20 resize-none"></textarea>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-6 border-t border-venezia-gray bg-venezia-black/50 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-400">Gesamtpreis</p>
+                    <p id="modal-total-price" class="text-2xl font-bold text-venezia-orange">8.50 €</p>
+                </div>
+                <button id="modal-submit-btn" onclick="saveConfiguredItem()" class="btn-glow bg-venezia-orange text-venezia-black font-bold px-6 py-3 rounded-lg flex items-center gap-2">
+                    In den Warenkorb <i class="fa-solid fa-basket-shopping"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide-Out Warenkorb Sidebar -->
+    <div id="cart-sidebar" class="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-venezia-dark border-l border-venezia-gray shadow-2xl flex flex-col cart-closed">
+        <!-- Header -->
+        <div class="p-6 border-b border-venezia-gray flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-basket-shopping text-venezia-orange text-xl"></i>
+                <h3 class="text-2xl text-white font-display">Dein Warenkorb</h3>
+            </div>
+            <button onclick="toggleCart()" class="text-gray-400 hover:text-white p-2">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="flex-grow overflow-y-auto p-6 space-y-4" id="cart-items-container">
+            <!-- Empty State -->
+            <div id="cart-empty-state" class="h-full flex flex-col items-center justify-center text-center p-8 space-y-4">
+                <div class="w-20 h-20 bg-venezia-gray rounded-full flex items-center justify-center text-gray-500 text-3xl">
+                    <i class="fa-solid fa-pizza-slice"></i>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold text-lg">Dein Warenkorb ist leer</h4>
+                    <p class="text-gray-400 text-sm mt-1">Füge leckere Pizzen und Gerichte hinzu, um deine Bestellung zu starten.</p>
+                </div>
+                <button onclick="toggleCart()" class="text-venezia-orange border border-venezia-orange px-6 py-2 rounded-lg font-bold text-sm hover:bg-venezia-orange hover:text-venezia-black transition-colors">
+                    Speisekarte ansehen
+                </button>
+            </div>
+
+            <!-- Cart Items dynamically filled -->
+            <div id="cart-list" class="space-y-4 hidden"></div>
+        </div>
+
+        <!-- Footer Sums -->
+        <div id="cart-summary-section" class="p-6 border-t border-venezia-gray bg-venezia-black/60 space-y-4 hidden">
+            <div class="space-y-2 text-sm text-gray-300">
+                <div class="flex justify-between">
+                    <span>Zwischensumme</span>
+                    <span id="summary-subtotal">0.00 €</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Lieferkosten</span>
+                    <span id="summary-delivery">2.00 €</span>
+                </div>
+                <div class="flex justify-between text-white font-bold text-lg pt-2 border-t border-venezia-gray">
+                    <span>Gesamtsumme</span>
+                    <span id="summary-total" class="text-venezia-orange">0.00 €</span>
+                </div>
+            </div>
+            
+            <button onclick="openCheckout()" class="btn-glow w-full bg-venezia-orange text-venezia-black font-bold py-4 rounded-lg flex items-center justify-center gap-2">
+                Zur Kasse gehen <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div id="checkout-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm hidden overflow-y-auto">
+        <div class="bg-venezia-dark border border-venezia-gray w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl my-8">
+            <div class="p-6 border-b border-venezia-gray flex justify-between items-center">
+                <h3 class="text-3xl text-white font-display">Bestellabschluss</h3>
+                <button onclick="closeCheckout()" class="text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <form id="checkout-form" onsubmit="submitOrder(event)" class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs uppercase tracking-wider text-gray-400 font-bold mb-2">Vorname *</label>
+                        <input type="text" required class="w-full bg-venezia-black border border-venezia-gray rounded-lg p-3 text-sm text-white focus:outline-none focus:border-venezia-orange">
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase tracking-wider text-gray-400 font-bold mb-2">Nachname *</label>
+                        <input type="text" required class="w-full bg-venezia-black border border-venezia-gray rounded-lg p-3 text-sm text-white focus:outline-none focus:border-venezia-orange">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs uppercase tracking-wider text-gray-400 font-bold mb-2">Straße & Hausnummer *</label>
+                        <input type="text" required class="w-full bg-venezia-black border border-venezia-gray rounded-lg p-3 text-sm text-white focus:outline-none focus:border-venezia-orange">
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase tracking-wider text-gray-400 font-bold mb-2">Etage / App. (Optional)</label>
+                        <input type="text" class="w-full bg-venezia-black border border-venezia-gray rounded-lg p-3 text-sm text-white focus:outline-none focus:border-venezia-orange">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs uppercase tracking-wider text-gray-400 font-bold mb-2">Postleitzahl *</label>
+                        <input type="text" required class="w-full bg-venezia-black border border-venezia-gray rounded-lg p-3 text-sm text-white focus:outline-none focus:border-venezia-orange">
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase tracking-wider text-gray-400 font-bold mb-2">Stadt *</label>
+                        <input type="text" required class="w-full bg-venezia-black border border-venezia-gray rounded-lg p-3 text-sm text-white focus:outline-none focus:border-venezia-orange">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs uppercase tracking-wider text-gray-400 font-bold mb-2">Telefonnummer *</label>
+                        <input type="tel" required class="w-full bg-venezia-black border border-venezia-gray rounded-lg p-3 text-sm text-white focus:outline-none focus:border-venezia-orange">
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase tracking-wider text-gray-400 font-bold mb-2">E-Mail-Adresse *</label>
+                        <input type="email" required class="w-full bg-venezia-black border border-venezia-gray rounded-lg p-3 text-sm text-white focus:outline-none focus:border-venezia-orange">
+                    </div>
+                </div>
+
+                <!-- Payment Methods -->
+                <div>
+                    <label class="block text-xs uppercase tracking-wider text-gray-400 font-bold mb-3">Zahlungsmethode *</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <label class="border border-venezia-gray rounded-lg p-3 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-venezia-orange hover:bg-venezia-black/30 transition-colors">
+                            <input type="radio" name="payment" value="bar" checked class="sr-only">
+                            <i class="fa-solid fa-money-bill-wave text-xl text-venezia-orange"></i>
+                            <span class="text-xs font-semibold">Barzahlung</span>
+                        </label>
+                        <label class="border border-venezia-gray rounded-lg p-3 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-venezia-orange hover:bg-venezia-black/30 transition-colors">
+                            <input type="radio" name="payment" value="paypal" class="sr-only">
+                            <i class="fa-brands fa-paypal text-xl text-blue-400"></i>
+                            <span class="text-xs font-semibold">PayPal</span>
+                        </label>
+                        <label class="border border-venezia-gray rounded-lg p-3 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-venezia-orange hover:bg-venezia-black/30 transition-colors">
+                            <input type="radio" name="payment" value="karte" class="sr-only">
+                            <i class="fa-solid fa-credit-card text-xl text-emerald-400"></i>
+                            <span class="text-xs font-semibold">Kreditkarte</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Complete Order Button -->
+                <button type="submit" class="btn-glow w-full bg-venezia-orange text-venezia-black font-bold py-4 rounded-lg flex items-center justify-center gap-2 text-lg">
+                    <i class="fa-solid fa-pizza-slice"></i> Verbindlich kostenpflichtig bestellen
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Live-Tracker Modal (appears post order) -->
+    <div id="tracker-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-sm hidden">
+        <div class="bg-venezia-dark border border-venezia-gray w-full max-w-md rounded-2xl overflow-hidden p-6 text-center space-y-6">
+            <div class="w-20 h-20 bg-venezia-orange/10 rounded-full flex items-center justify-center text-venezia-orange text-3xl mx-auto border border-venezia-orange/30">
+                <i class="fa-solid fa-hourglass-half animate-spin"></i>
+            </div>
+            <div>
+                <span class="text-xs text-venezia-orange uppercase font-bold tracking-widest">Live-Status</span>
+                <h3 class="text-3xl text-white font-display mt-1">Deine Bestellung wird zubereitet</h3>
+                <p class="text-gray-400 text-sm mt-1">Vielen Dank für deinen Einkauf bei Pizzeria Venezia!</p>
+            </div>
+
+            <!-- Steps -->
+            <div class="space-y-4 text-left max-w-xs mx-auto py-4">
+                <div class="flex items-center gap-3">
+                    <div id="step-1" class="w-6 h-6 rounded-full bg-venezia-orange text-venezia-black flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-check"></i></div>
+                    <span class="text-white font-medium text-sm">Bestellung eingegangen</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div id="step-2" class="w-6 h-6 rounded-full bg-venezia-orange text-venezia-black flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-spinner animate-spin"></i></div>
+                    <span class="text-white font-medium text-sm">Frisch zubereitet & Belegt</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div id="step-3" class="w-6 h-6 rounded-full bg-venezia-gray text-gray-500 flex items-center justify-center font-bold text-xs">3</div>
+                    <span class="text-gray-400 text-sm">Im Buchenholzofen gebacken</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div id="step-4" class="w-6 h-6 rounded-full bg-venezia-gray text-gray-500 flex items-center justify-center font-bold text-xs">4</div>
+                    <span class="text-gray-400 text-sm">Heiß geliefert in ca. 30 Min.</span>
+                </div>
+            </div>
+
+            <button onclick="closeTracker()" class="w-full border border-venezia-gray hover:border-white text-white py-3 rounded-lg font-bold text-sm transition-all">
+                Tracker schließen & Weiter einkaufen
+            </button>
+        </div>
+    </div>
+
+    <!-- About Section -->
+    <section id="about" class="bg-venezia-dark py-20 border-t border-venezia-gray">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="space-y-6">
+                    <span class="text-venezia-orange uppercase font-bold tracking-widest text-sm">Das Geheimnis von Venezia</span>
+                    <h2 class="text-4xl sm:text-6xl text-white font-display">Tradition trifft Leidenschaft</h2>
+                    <p class="text-gray-300 leading-relaxed">
+                        Seit über zwei Jahrzehnten backen wir unsere Pizzen nach einem streng gehüteten Familienrezept aus Venetien. Das Geheimnis liegt in der Zeit: Unser Teig ruht volle drei Tage, wodurch er unvergleichlich bekömmlich, luftig und knusprig wird.
+                    </p>
+                    <p class="text-gray-300 leading-relaxed">
+                        Gebacken wird bei uns traditionell bei über 450 Grad direkt auf Stein, befeuert mit bestem Buchenholz. So erhalten unsere Pizzaränder das typisch rauchige Aroma und die wunderschöne, unregelmäßige Bräunung (die berühmten "Leopardenflecken").
+                    </p>
+                    <div class="flex gap-6 pt-4">
+                        <div class="text-center bg-venezia-black/50 p-4 rounded-xl border border-venezia-gray w-24">
+                            <span class="text-2xl font-bold text-venezia-orange">100%</span>
+                            <p class="text-xs text-gray-400 mt-1 uppercase">Frisch</p>
+                        </div>
+                        <div class="text-center bg-venezia-black/50 p-4 rounded-xl border border-venezia-gray w-24">
+                            <span class="text-2xl font-bold text-venezia-orange">72h</span>
+                            <p class="text-xs text-gray-400 mt-1 uppercase">Hefe-Gärung</p>
+                        </div>
+                        <div class="text-center bg-venezia-black/50 p-4 rounded-xl border border-venezia-gray w-24">
+                            <span class="text-2xl font-bold text-venezia-orange">450°C</span>
+                            <p class="text-xs text-gray-400 mt-1 uppercase">Holzofen</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative">
+                    <div class="absolute inset-0 bg-venezia-orange rounded-2xl transform rotate-3 scale-95 opacity-20 blur-sm"></div>
+                    <img src="https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=2069&auto=format&fit=crop" alt="Frische Pizza im Holzofen" class="relative rounded-2xl shadow-2xl border border-venezia-gray object-cover h-[450px] w-full">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer with opening hours & contact -->
+    <footer id="contact" class="bg-venezia-black border-t border-venezia-gray text-gray-400 py-16 text-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+            <div class="space-y-4">
+                <span class="text-3xl font-display text-white tracking-widest">PIZZERIA <span class="text-venezia-orange">VENEZIA</span></span>
+                <p class="text-xs text-gray-400">Authentische neapolitanische Pizzen und Köstlichkeiten direkt aus dem Buchenholzofen.</p>
+                <div class="flex space-x-4">
+                    <a href="#" class="hover:text-venezia-orange"><i class="fa-brands fa-instagram text-lg"></i></a>
+                    <a href="#" class="hover:text-venezia-orange"><i class="fa-brands fa-facebook text-lg"></i></a>
+                    <a href="#" class="hover:text-venezia-orange"><i class="fa-brands fa-tiktok text-lg"></i></a>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="text-white font-bold uppercase tracking-wider mb-4">Öffnungszeiten</h4>
+                <ul class="space-y-2">
+                    <li class="flex justify-between"><span>Montag</span> <span class="text-white">Ruhetag</span></li>
+                    <li class="flex justify-between"><span>Dienstag - Freitag</span> <span class="text-white">16:30 - 22:30</span></li>
+                    <li class="flex justify-between"><span>Samstag & Sonntag</span> <span class="text-white">12:00 - 22:30</span></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="text-white font-bold uppercase tracking-wider mb-4">Liefergebiete</h4>
+                <p class="text-xs leading-relaxed mb-2">Wir liefern blitzschnell und ofenfrisch ab einem Mindestbestellwert von 15,00 €.</p>
+                <ul class="space-y-1 text-xs">
+                    <li><i class="fa-solid fa-map-pin text-venezia-orange mr-2"></i> Bünde (Mitte / Ennigloh)</li>
+                    <li><i class="fa-solid fa-map-pin text-venezia-orange mr-2"></i> Spradow & Hunnebrock</li>
+                    <li><i class="fa-solid fa-map-pin text-venezia-orange mr-2"></i> Südlengern</li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="text-white font-bold uppercase tracking-wider mb-4">Kontakt</h4>
+                <ul class="space-y-2">
+                    <li class="flex items-center gap-3"><i class="fa-solid fa-phone text-venezia-orange"></i> <span class="text-white font-bold">05223 998877</span></li>
+                    <li class="flex items-center gap-3"><i class="fa-solid fa-envelope text-venezia-orange"></i> <span>bestellung@pizzeria-venezia.de</span></li>
+                    <li class="flex items-center gap-3"><i class="fa-solid fa-location-dot text-venezia-orange"></i> <span>Venezia Str. 12, 32257 Bünde</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-venezia-gray pt-8 flex flex-col md:flex-row justify-between items-center text-xs">
+            <p>&copy; 2026 Pizzeria Venezia. Alle Rechte vorbehalten.</p>
+            <div class="flex space-x-6 mt-4 md:mt-0">
+                <a href="#" class="hover:text-white">Impressum</a>
+                <a href="#" class="hover:text-white">Datenschutz</a>
+                <a href="#" class="hover:text-white">Allgemeine Geschäftsbedingungen</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- App Logic / JS -->
+    <script>
+        // Database of menu items
+        const menuItems = [
+            // Pizza
+            { id: 1, name: "Pizza Margherita", desc: "San Marzano Tomaten, feiner Fior di Latte Mozzarella, frisches Basilikum, extra natives Olivenöl.", price: 8.50, category: "pizza", image: "https://images.unsplash.com/photo-1604068549290-dea0e4a305ca?q=80&w=1974&auto=format&fit=crop" },
+            { id: 2, name: "Pizza Diavola", desc: "Scharfe kalabrische Salami, frische Peperoni, Fior di Latte Mozzarella, Tomatensauce.", price: 10.50, category: "pizza", image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=2070&auto=format&fit=crop" },
+            { id: 3, name: "Pizza Prosciutto e Funghi", desc: "Gekochter Premium-Schinken, frische Champignons, Fior di Latte, Oregano.", price: 10.00, category: "pizza", image: "https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?q=80&w=1925&auto=format&fit=crop" },
+            { id: 4, name: "Pizza Quattro Formaggi", desc: "Gorgonzola, Fior di Latte Mozzarella, Parmesan, milder Provola-Käse.", price: 11.50, category: "pizza", image: "https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?q=80&w=1935&auto=format&fit=crop" },
+            { id: 5, name: "Pizza Tonno e Cipolla", desc: "Zarter Thunfisch, rote Zwiebeln, schwarze Oliven, Mozzarella, Oregano.", price: 10.90, category: "pizza", image: "https://images.unsplash.com/photo-1573821663912-569905455b1c?q=80&w=1974&auto=format&fit=crop" },
+            
+            // Pasta
+            { id: 6, name: "Penne all'Arrabbiata", desc: "Scharfe Tomatensauce mit aromatischem Knoblauch, Peperoncino und frischer Petersilie.", price: 8.90, category: "pasta", image: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?q=80&w=2010&auto=format&fit=crop" },
+            { id: 7, name: "Spaghetti alla Carbonara", desc: "Original italienische Rezeptur mit Guanciale-Schinken, Ei, Pecorino und schwarzem Pfeffer.", price: 10.90, category: "pasta", image: "https://images.unsplash.com/photo-1612874742237-6526221588e3?q=80&w=1971&auto=format&fit=crop" },
+            
+            // Salate
+            { id: 8, name: "Insalata Caprese", desc: "Aromatische Tomaten, cremiger Büffelmozzarella, Basilikumpesto & Crema di Balsamico.", price: 7.90, category: "salad", image: "https://images.unsplash.com/photo-1592417817098-8f3d6eb19675?q=80&w=1974&auto=format&fit=crop" },
+            { id: 9, name: "Insalata Mista", desc: "Knackiger Wildkräutersalat mit Gurken, Kirschtomaten, Karotten und Haus-Dressing.", price: 6.50, category: "salad", image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=2070&auto=format&fit=crop" },
+            
+            // Dessert
+            { id: 10, name: "Tiramisu della Casa", desc: "Hausgemacht nach Omas Geheimrezept mit echtem Espresso, Mascarpone und etwas Amaretto.", price: 5.50, category: "dessert", image: "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?q=80&w=1974&auto=format&fit=crop" },
+            
+            // Getränke
+            { id: 11, name: "San Pellegrino 0.75l", desc: "Spritziges italienisches Mineralwasser aus der lombardischen Quelle.", price: 3.90, category: "drink", image: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=2070&auto=format&fit=crop" },
+            { id: 12, name: "Coca Cola 1.0l", desc: "Koffeinhaltiges Erfrischungsgetränk (Mehrwegflasche).", price: 3.50, category: "drink", image: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=2070&auto=format&fit=crop" }
+        ];
+
+        // Available toppings for customizer
+        const availableToppings = [
+            { name: "Extra Käse", price: 1.50 },
+            { name: "Salami", price: 1.50 },
+            { name: "Schinken", price: 1.50 },
+            { name: "Frische Champignons", price: 1.00 },
+            { name: "Scharfe Peperoni", price: 1.00 },
+            { name: "Knoblauchöl", price: 0.50 }
+        ];
+
+        let cart = [];
+        let activeCategory = 'all';
+        let currentEditingItem = null;
+        let isEditingMode = false;
+        let editingCartId = null;
+
+        // Render Menu Cards
+        function renderMenu() {
+            const grid = document.getElementById('menu-grid');
+            grid.innerHTML = '';
+
+            const filtered = activeCategory === 'all' 
+                ? menuItems 
+                : menuItems.filter(item => item.category === activeCategory);
+
+            filtered.forEach(item => {
+                const isCustomizable = item.category === 'pizza' || item.category === 'pasta';
+                const card = `
+                    <div class="bg-venezia-dark border border-venezia-gray rounded-2xl overflow-hidden hover:border-venezia-orange/50 transition-all duration-300 flex flex-col group h-full">
+                        <div class="relative overflow-hidden h-52">
+                            <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                            <span class="absolute top-4 right-4 bg-venezia-black/80 backdrop-blur-md text-venezia-orange font-bold px-3 py-1.5 rounded-lg text-sm border border-venezia-gray">
+                                ${item.price.toFixed(2)} €
+                            </span>
+                        </div>
+                        <div class="p-6 flex flex-col flex-grow justify-between space-y-4">
+                            <div class="space-y-2">
+                                <h3 class="text-2xl text-white font-display group-hover:text-venezia-orange transition-colors">${item.name}</h3>
+                                <p class="text-gray-400 text-xs leading-relaxed line-clamp-3">${item.desc}</p>
+                            </div>
+                            <div class="pt-2">
+                                ${isCustomizable ? `
+                                    <button onclick="openConfigurator(${item.id})" class="w-full bg-venezia-orange/10 hover:bg-venezia-orange hover:text-venezia-black border border-venezia-orange text-venezia-orange py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2">
+                                        Anpassen & Hinzufügen <i class="fa-solid fa-sliders"></i>
+                                    </button>
+                                ` : `
+                                    <button onclick="addToCart(${item.id})" class="w-full bg-venezia-gray hover:bg-white text-white hover:text-venezia-black py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2">
+                                        In den Warenkorb <i class="fa-solid fa-basket-shopping"></i>
+                                    </button>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                grid.innerHTML += card;
+            });
+        }
+
+        // Tab Filter Action
+        function filterCategory(category) {
+            activeCategory = category;
+            
+            // Manage UI Active Tab State
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-venezia-orange', 'text-venezia-black', 'border-venezia-orange');
+                btn.classList.add('bg-venezia-dark', 'text-white', 'border-venezia-gray');
+            });
+
+            const activeTab = document.getElementById(`tab-${category}`);
+            activeTab.classList.remove('bg-venezia-dark', 'text-white', 'border-venezia-gray');
+            activeTab.classList.add('active', 'bg-venezia-orange', 'text-venezia-black', 'border-venezia-orange');
+
+            renderMenu();
+        }
+
+        // Cart Interaction Functions
+        function toggleCart() {
+            const sidebar = document.getElementById('cart-sidebar');
+            sidebar.classList.toggle('cart-closed');
+            sidebar.classList.toggle('cart-open');
+        }
+
+        // Toast Messages
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-message');
+            msgEl.innerText = message;
+            
+            toast.classList.remove('opacity-0', 'translate-y-20');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'translate-y-20');
+            }, 3000);
+        }
+
+        // Quick Add directly to Cart (Non-customizable items)
+        function addToCart(itemId) {
+            const originItem = menuItems.find(i => i.id === itemId);
+            const existingCartItemIndex = cart.findIndex(c => c.itemId === itemId && c.selectedToppings.length === 0 && !c.notes);
+
+            if (existingCartItemIndex > -1) {
+                cart[existingCartItemIndex].quantity += 1;
+            } else {
+                cart.push({
+                    cartId: Date.now() + Math.random().toString(36).substr(2, 5),
+                    itemId: itemId,
+                    name: originItem.name,
+                    basePrice: originItem.price,
+                    price: originItem.price,
+                    quantity: 1,
+                    selectedToppings: [],
+                    notes: ""
+                });
+            }
+
+            updateCartUI();
+            showToast(`${originItem.name} zum Warenkorb hinzugefügt!`);
+        }
+
+        // Configurator Modal Logic
+        function openConfigurator(itemId, existingCartId = null) {
+            const item = menuItems.find(i => i.id === itemId);
+            currentEditingItem = item;
+            isEditingMode = !!existingCartId;
+            editingCartId = existingCartId;
+
+            // Update modal texts
+            document.getElementById('modal-item-title').innerText = item.name;
+            document.getElementById('modal-notes').value = "";
+            document.getElementById('config-modal').classList.remove('hidden');
+
+            // Render toppings list
+            const toppingsContainer = document.getElementById('toppings-container');
+            toppingsContainer.innerHTML = '';
+
+            let preSelectedToppings = [];
+            if (isEditingMode) {
+                const existingItem = cart.find(c => c.cartId === existingCartId);
+                preSelectedToppings = existingItem.selectedToppings || [];
+                document.getElementById('modal-notes').value = existingItem.notes || "";
+                document.getElementById('modal-submit-btn').innerHTML = `Änderung speichern <i class="fa-solid fa-save"></i>`;
+            } else {
+                document.getElementById('modal-submit-btn').innerHTML = `In den Warenkorb <i class="fa-solid fa-basket-shopping"></i>`;
+            }
+
+            availableToppings.forEach((topping, index) => {
+                const isChecked = preSelectedToppings.includes(topping.name);
+                const toppingId = `topping-${index}`;
+                const element = `
+                    <label class="flex items-center space-x-3 bg-venezia-black/50 p-4 rounded-xl border border-venezia-gray cursor-pointer hover:border-venezia-orange transition-colors">
+                        <input type="checkbox" id="${toppingId}" class="custom-checkbox" value="${topping.name}" ${isChecked ? 'checked' : ''} onchange="recalculateModalPrice()">
+                        <div class="flex-grow">
+                            <p class="text-xs font-bold text-white">${topping.name}</p>
+                            <p class="text-[10px] text-gray-400">+ ${topping.price.toFixed(2)} €</p>
+                        </div>
+                    </label>
+                `;
+                toppingsContainer.innerHTML += element;
+            });
+
+            recalculateModalPrice();
+        }
+
+        function closeConfigurator() {
+            document.getElementById('config-modal').classList.add('hidden');
+            currentEditingItem = null;
+            isEditingMode = false;
+            editingCartId = null;
+        }
+
+        function recalculateModalPrice() {
+            if (!currentEditingItem) return;
+            let totalPrice = currentEditingItem.price;
+
+            // Add topping prices
+            const checkboxes = document.querySelectorAll('#toppings-container input[type="checkbox"]');
+            checkboxes.forEach(box => {
+                if (box.checked) {
+                    const matchedTopping = availableToppings.find(t => t.name === box.value);
+                    if (matchedTopping) {
+                        totalPrice += matchedTopping.price;
+                    }
+                }
+            });
+
+            document.getElementById('modal-total-price').innerText = `${totalPrice.toFixed(2)} €`;
+        }
+
+        function saveConfiguredItem() {
+            if (!currentEditingItem) return;
+
+            const selectedToppings = [];
+            const checkboxes = document.querySelectorAll('#toppings-container input[type="checkbox"]');
+            let toppingsCost = 0;
+
+            checkboxes.forEach(box => {
+                if (box.checked) {
+                    selectedToppings.push(box.value);
+                    const topping = availableToppings.find(t => t.name === box.value);
+                    if (topping) toppingsCost += topping.price;
+                }
+            });
+
+            const finalItemPrice = currentEditingItem.price + toppingsCost;
+            const notes = document.getElementById('modal-notes').value.trim();
+
+            if (isEditingMode) {
+                // Update in cart
+                const itemIndex = cart.findIndex(c => c.cartId === editingCartId);
+                if (itemIndex > -1) {
+                    cart[itemIndex].selectedToppings = selectedToppings;
+                    cart[itemIndex].notes = notes;
+                    cart[itemIndex].price = finalItemPrice;
+                }
+                showToast("Bestellung angepasst.");
+            } else {
+                // Add new to cart
+                cart.push({
+                    cartId: Date.now() + Math.random().toString(36).substr(2, 5),
+                    itemId: currentEditingItem.id,
+                    name: currentEditingItem.name,
+                    basePrice: currentEditingItem.price,
+                    price: finalItemPrice,
+                    quantity: 1,
+                    selectedToppings: selectedToppings,
+                    notes: notes
+                });
+                showToast(`${currentEditingItem.name} angepasst hinzugefügt!`);
+            }
+
+            closeConfigurator();
+            updateCartUI();
+        }
+
+        // Update State & Redraw Sidebar Warenkorb UI
+        function updateCartUI() {
+            const emptyState = document.getElementById('cart-empty-state');
+            const cartList = document.getElementById('cart-list');
+            const summarySection = document.getElementById('cart-summary-section');
+            const cartCountElement = document.getElementById('cart-count');
+
+            const totalItemsCount = cart.reduce((acc, curr) => acc + curr.quantity, 0);
+            cartCountElement.innerText = totalItemsCount;
+
+            if (cart.length === 0) {
+                emptyState.classList.remove('hidden');
+                cartList.classList.add('hidden');
+                summarySection.classList.add('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            cartList.classList.remove('hidden');
+            summarySection.classList.remove('hidden');
+
+            cartList.innerHTML = '';
+            let subtotal = 0;
+
+            cart.forEach(item => {
+                subtotal += item.price * item.quantity;
+                const toppingsText = item.selectedToppings.length > 0 
+                    ? `<p class="text-[10px] text-venezia-orange mt-1 font-semibold"><i class="fa-solid fa-plus text-[8px] mr-1"></i> ${item.selectedToppings.join(', ')}</p>` 
+                    : '';
+                const notesText = item.notes 
+                    ? `<p class="text-[10px] text-gray-400 italic mt-0.5"><i class="fa-solid fa-pen-fancy text-[8px] mr-1"></i> "${item.notes}"</p>` 
+                    : '';
+
+                const element = `
+                    <div class="bg-venezia-black/60 border border-venezia-gray rounded-xl p-4 flex flex-col space-y-3">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="text-sm font-bold text-white">${item.name}</h4>
+                                ${toppingsText}
+                                ${notesText}
+                            </div>
+                            <span class="text-sm font-semibold text-white">${(item.price * item.quantity).toFixed(2)} €</span>
+                        </div>
+                        <div class="flex justify-between items-center pt-2 border-t border-venezia-gray/40">
+                            <!-- Change toppings edit icon if customizable -->
+                            <div class="flex gap-2">
+                                ${(item.selectedToppings.length > 0 || item.itemId === 1 || item.itemId === 2 || item.itemId === 3 || item.itemId === 4 || item.itemId === 5) ? `
+                                    <button onclick="openConfigurator(${item.itemId}, '${item.cartId}')" class="text-gray-400 hover:text-venezia-orange text-xs flex items-center gap-1">
+                                        <i class="fa-solid fa-pen-to-square"></i> Ändern
+                                    </button>
+                                ` : ''}
+                                <button onclick="removeFromCart('${item.cartId}')" class="text-rose-400/80 hover:text-rose-400 text-xs flex items-center gap-1">
+                                    <i class="fa-solid fa-trash-can"></i> Entfernen
+                                </button>
+                            </div>
+                            <div class="flex items-center gap-3 bg-venezia-dark px-3 py-1.5 rounded-lg border border-venezia-gray">
+                                <button onclick="adjustQuantity('${item.cartId}', -1)" class="text-gray-400 hover:text-white text-xs px-1"><i class="fa-solid fa-minus"></i></button>
+                                <span class="text-xs font-bold text-white min-w-[15px] text-center">${item.quantity}</span>
+                                <button onclick="adjustQuantity('${item.cartId}', 1)" class="text-gray-400 hover:text-white text-xs px-1"><i class="fa-solid fa-plus"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                cartList.innerHTML += element;
+            });
+
+            // Summary Math
+            const deliveryCost = subtotal >= 30 ? 0 : 2.00;
+            const total = subtotal + deliveryCost;
+
+            document.getElementById('summary-subtotal').innerText = `${subtotal.toFixed(2)} €`;
+            document.getElementById('summary-delivery').innerText = deliveryCost === 0 ? "Kostenlos" : `${deliveryCost.toFixed(2)} €`;
+            document.getElementById('summary-total').innerText = `${total.toFixed(2)} €`;
+        }
+
+        function adjustQuantity(cartId, amount) {
+            const item = cart.find(c => c.cartId === cartId);
+            if (!item) return;
+
+            item.quantity += amount;
+            if (item.quantity <= 0) {
+                cart = cart.filter(c => c.cartId !== cartId);
+            }
+            updateCartUI();
+        }
+
+        function removeFromCart(cartId) {
+            cart = cart.filter(c => c.cartId !== cartId);
+            updateCartUI();
+        }
+
+        // Checkout Modal Functions
+        function openCheckout() {
+            toggleCart(); // Close sidebar
+            document.getElementById('checkout-modal').classList.remove('hidden');
+        }
+
+        function closeCheckout() {
+            document.getElementById('checkout-modal').classList.add('hidden');
+        }
+
+        // Submit checkout form and start simulated tracker
+        function submitOrder(event) {
+            event.preventDefault();
+            closeCheckout();
+            
+            // Empty cart
+            cart = [];
+            updateCartUI();
+
+            // Open Tracker
+            const trackerModal = document.getElementById('tracker-modal');
+            trackerModal.classList.remove('hidden');
+
+            // Live-Tracker Animation steps
+            setTimeout(() => {
+                document.getElementById('step-2').innerHTML = `<i class="fa-solid fa-check"></i>`;
+                document.getElementById('step-2').classList.remove('bg-venezia-orange', 'text-venezia-black');
+                document.getElementById('step-2').classList.add('bg-emerald-500', 'text-white');
+                
+                document.getElementById('step-3').innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i>`;
+                document.getElementById('step-3').classList.remove('bg-venezia-gray', 'text-gray-500');
+                document.getElementById('step-3').classList.add('bg-venezia-orange', 'text-venezia-black');
+            }, 5000);
+
+            setTimeout(() => {
+                document.getElementById('step-3').innerHTML = `<i class="fa-solid fa-check"></i>`;
+                document.getElementById('step-3').classList.remove('bg-venezia-orange', 'text-venezia-black');
+                document.getElementById('step-3').classList.add('bg-emerald-500', 'text-white');
+                
+                document.getElementById('step-4').innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i>`;
+                document.getElementById('step-4').classList.remove('bg-venezia-gray', 'text-gray-500');
+                document.getElementById('step-4').classList.add('bg-venezia-orange', 'text-venezia-black');
+            }, 10000);
+        }
+
+        function closeTracker() {
+            document.getElementById('tracker-modal').classList.add('hidden');
+        }
+
+        // Initialize App on Window Load
+        window.onload = function() {
+            renderMenu();
+        }
+    </script>
+</body>
+</html>
