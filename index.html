@@ -58,14 +58,14 @@
         .cart-closed {
             transform: translateX(100%);
         }
-        #config-modal {
+        #config-modal, #checkout-modal {
             transition: opacity 0.2s ease-in-out;
         }
-        #config-modal .modal-content {
+        #config-modal .modal-content, #checkout-modal .modal-content {
             transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             transform: scale(0.95) translateY(20px);
         }
-        #config-modal:not(.hidden) .modal-content {
+        #config-modal:not(.hidden) .modal-content, #checkout-modal:not(.hidden) .modal-content {
             transform: scale(1) translateY(0);
         }
         .custom-checkbox {
@@ -137,6 +137,10 @@
             -webkit-appearance: none;
             margin: 0;
         }
+        select option {
+            background-color: theme('colors.venezia-dark');
+            color: theme('colors.venezia-light');
+        }
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         ::-webkit-scrollbar { width: 8px; }
@@ -162,6 +166,9 @@
                 </div>
 
                 <div class="flex items-center gap-4">
+                    <button id="nav-account-icon" class="text-venezia-light hover:text-venezia-orange transition-colors flex items-center justify-center bg-venezia-dark w-10 h-10 rounded-full border border-gray-800" title="Mein Konto">
+                        <i class="fas fa-user text-lg"></i>
+                    </button>
                     <button id="cart-btn" class="relative text-venezia-light hover:text-venezia-orange transition-colors flex items-center gap-2 bg-venezia-dark px-4 py-2 rounded-full border border-gray-800">
                         <i class="fas fa-shopping-basket text-lg"></i>
                         <span id="cart-nav-total" class="hidden sm:inline font-bold text-sm">0.00€</span>
@@ -199,6 +206,7 @@
                 <button id="type-delivery" class="flex-1 py-2.5 text-sm font-bold uppercase tracking-wider text-venezia-black bg-venezia-orange rounded-sm transition-colors shadow-sm">Lieferung</button>
                 <button id="type-pickup" class="flex-1 py-2.5 text-sm font-bold uppercase tracking-wider text-gray-400 hover:text-venezia-light rounded-sm transition-colors">Abholung</button>
             </div>
+            
             <div id="delivery-info-text" class="text-xs text-gray-400 mt-3 text-center font-medium">
                 Mindestbestellwert für Lieferung: 15.00€
             </div>
@@ -217,13 +225,16 @@
                 <span>Zwischensumme</span>
                 <span id="cart-subtotal" class="font-medium">0.00€</span>
             </div>
-            <div class="flex justify-between text-gray-400 mb-4 text-sm" id="delivery-fee-row">
+            <div class="flex justify-between items-center text-gray-400 mb-4 text-sm" id="delivery-fee-row">
                 <span>Lieferkosten</span>
-                <span id="cart-delivery-fee" class="font-medium">2.50€</span>
+                <span class="font-medium text-venezia-orange text-xs text-right leading-tight">wird anhand Adresse<br>berechnet</span>
             </div>
-            <div class="flex justify-between text-venezia-light font-display text-3xl mb-6 border-t border-gray-800 pt-4">
-                <span>Gesamt</span>
+            <div class="flex justify-between text-venezia-light font-display text-3xl mb-1 border-t border-gray-800 pt-4">
+                <span>Summe</span>
                 <span id="cart-total" class="text-venezia-orange">0.00€</span>
+            </div>
+            <div id="delivery-fee-notice" class="text-right text-xs text-gray-500 mb-6 italic">
+                (nur Speisen & Getränke)
             </div>
             
             <button id="checkout-btn" class="w-full bg-venezia-orange text-venezia-black font-bold uppercase tracking-widest py-4 rounded hover:bg-venezia-light transition-all duration-300 btn-glow flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-venezia-orange disabled:hover:shadow-none" disabled>
@@ -232,6 +243,104 @@
         </div>
     </div>
 
+    <!-- CHECKOUT MODAL -->
+    <div id="checkout-modal" class="hidden fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6 opacity-0">
+        <div class="absolute inset-0 bg-black/90 backdrop-blur-sm" id="checkout-modal-bg"></div>
+        
+        <div class="modal-content relative bg-venezia-dark w-full max-w-lg rounded-xl overflow-hidden shadow-2xl border border-gray-800 flex flex-col max-h-[90vh]">
+            <button id="close-checkout-btn" class="absolute top-4 right-4 z-10 bg-black/50 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-venezia-orange hover:text-black transition-colors backdrop-blur-md">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <div class="p-6 bg-venezia-black border-b border-gray-800">
+                <h2 class="font-display text-3xl text-venezia-light">Kasse</h2>
+                <p class="text-venezia-orange text-sm mt-1 font-bold tracking-wider uppercase" id="checkout-type-text">Lieferung</p>
+            </div>
+
+            <div class="p-6 overflow-y-auto flex-1 bg-venezia-dark">
+                <form id="checkout-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Vor- & Nachname *</label>
+                        <input type="text" id="co-name" required class="w-full bg-venezia-black border border-gray-700 rounded p-3 text-venezia-light focus:border-venezia-orange outline-none transition-colors">
+                    </div>
+                    
+                    <div id="co-address-fields" class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Straße & Hausnummer *</label>
+                            <input type="text" id="co-street" class="w-full bg-venezia-black border border-gray-700 rounded p-3 text-venezia-light focus:border-venezia-orange outline-none transition-colors">
+                        </div>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="col-span-1">
+                                <label class="block text-sm text-gray-400 mb-1">PLZ *</label>
+                                <input type="text" id="co-zip" class="w-full bg-venezia-black border border-gray-700 rounded p-3 text-venezia-light focus:border-venezia-orange outline-none transition-colors">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-sm text-gray-400 mb-1">Ort *</label>
+                                <input type="text" id="co-city" class="w-full bg-venezia-black border border-gray-700 rounded p-3 text-venezia-light focus:border-venezia-orange outline-none transition-colors">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Telefonnummer (für Rückfragen) *</label>
+                        <input type="tel" id="co-phone" required class="w-full bg-venezia-black border border-gray-700 rounded p-3 text-venezia-light focus:border-venezia-orange outline-none transition-colors">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Anmerkungen zur Bestellung (Optional)</label>
+                        <textarea id="co-notes" rows="2" class="w-full bg-venezia-black border border-gray-700 rounded p-3 text-venezia-light focus:border-venezia-orange outline-none transition-colors" placeholder="Z.B. Bitte bei Müller klingeln..."></textarea>
+                    </div>
+                </form>
+            </div>
+
+            <div class="p-6 bg-venezia-black border-t border-gray-800">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-gray-400">Summe (Speisen & Getränke)</span>
+                    <span class="font-display text-2xl text-venezia-light" id="checkout-final-total">0.00€</span>
+                </div>
+                <div id="checkout-fee-notice" class="text-right text-xs text-venezia-orange mb-6 italic">
+                    zzgl. Lieferkosten (Berechnung je nach Adresse)
+                </div>
+                
+                <button id="submit-order-btn" type="submit" form="checkout-form" class="w-full bg-venezia-orange text-venezia-black font-bold uppercase tracking-wider py-4 rounded-lg hover:bg-venezia-light transition-colors btn-glow">
+                    Zahlungspflichtig bestellen
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUTH MODAL -->
+    <div id="auth-modal" class="hidden fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6 opacity-0 transition-opacity duration-200 ease-in-out">
+        <div class="absolute inset-0 bg-black/90 backdrop-blur-sm" id="auth-modal-bg"></div>
+        <div class="modal-content relative bg-venezia-dark w-full max-w-md rounded-xl overflow-hidden shadow-2xl border border-gray-800 flex flex-col transform transition-transform duration-300 scale-95">
+            <button id="close-auth-btn" class="absolute top-4 right-4 z-10 bg-black/50 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-venezia-orange hover:text-black transition-colors backdrop-blur-md">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="p-6 bg-venezia-black border-b border-gray-800">
+                <h2 class="font-display text-3xl text-venezia-light" id="auth-title">Anmelden</h2>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1">
+                <div id="login-form-container">
+                    <input type="email" id="login-email" placeholder="E-Mail Adresse" class="w-full mb-3 bg-venezia-black border border-gray-700 rounded p-3 text-venezia-light focus:border-venezia-orange outline-none transition-colors">
+                    <input type="password" id="login-pw" placeholder="Passwort" class="w-full mb-4 bg-venezia-black border border-gray-700 rounded p-3 text-venezia-light focus:border-venezia-orange outline-none transition-colors">
+                    <button id="do-login-btn" class="w-full bg-venezia-orange text-venezia-black font-bold uppercase tracking-wider py-3 rounded hover:bg-venezia-light transition-colors mb-4 btn-glow">Einloggen</button>
+                    <p class="text-sm text-gray-400 text-center">Noch kein Konto? <a href="#" id="show-register" class="text-venezia-orange hover:underline font-bold">Hier registrieren</a></p>
+                </div>
+                <div id="register-form-container" class="hidden">
+                    <input type="text" id="reg-name" placeholder="Vor- & Nachname *" class="w-full mb-3 bg-venezia-black border border-gray-700 rounded p-3 text-venezia-light focus:border-venezia-orange outline-none transition-colors">
+                    <input type="email" id="reg-email" placeholder="E-Mail Adresse *" class="w-full mb-3 bg-venezia-black border border-gray-700 rounded p-3 text-venezia-light focus:border-venezia-orange outline-none transition-colors">
+                    <input type="password" id="reg-pw" placeholder="Passwort *" class="w-full mb-4 bg-venezia-black border border-gray-700 rounded p-3 text-venezia-light focus:border-venezia-orange outline-none transition-colors">
+                    <button id="do-register-btn" class="w-full bg-venezia-orange text-venezia-black font-bold uppercase tracking-wider py-3 rounded hover:bg-venezia-light transition-colors mb-4 btn-glow">Konto erstellen</button>
+                    <p class="text-sm text-gray-400 text-center">Bereits Kunde? <a href="#" id="show-login" class="text-venezia-orange hover:underline font-bold">Hier anmelden</a></p>
+                </div>
+                <div class="mt-6 pt-6 border-t border-gray-800 text-center">
+                    <button id="guest-checkout-btn" class="text-gray-400 hover:text-venezia-light text-sm font-medium transition-colors">Als Gast ohne Konto fortfahren <i class="fas fa-arrow-right ml-1"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Configurator Modal -->
     <div id="config-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 opacity-0">
         <div class="absolute inset-0 bg-black/90 backdrop-blur-sm" id="config-modal-bg"></div>
         
@@ -251,7 +360,7 @@
             </div>
 
             <div class="flex-1 overflow-y-auto p-6 bg-venezia-dark" id="modal-options-container">
-                <!-- Varianten (Sorte, Größe für Getränke) -->
+                <!-- Varianten (Sorte, Größe, etc) -->
                 <div id="variants-section" class="mb-6 hidden"></div>
 
                 <!-- Extras (Toppings, etc) -->
@@ -293,12 +402,9 @@
                 Steinofen-Tradition
             </span>
             <h1 class="text-5xl md:text-7xl lg:text-8xl text-venezia-light mb-6 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] leading-none font-display">
-                Die beste Pizza <br><span class="text-venezia-orange">der Stadt</span>
+                Venezia <br><span class="text-venezia-orange">Bünde</span>
             </h1>
-            <p class="text-lg text-gray-300 mb-10 max-w-2xl mx-auto font-light drop-shadow-md bg-black/30 p-4 rounded-xl backdrop-blur-sm">
-                Willkommen bei Pizzeria Venezia in Bünde. Frischer Teig, San Marzano Tomaten und Liebe zum Detail.
-            </p>
-            <div class="flex flex-col sm:flex-row justify-center gap-4">
+            <div class="flex flex-col sm:flex-row justify-center gap-4 mt-10">
                 <a href="#menu-section" class="bg-venezia-orange text-venezia-black px-8 py-4 rounded text-lg font-bold uppercase tracking-wider hover:bg-venezia-light transition-all duration-300 btn-glow shadow-lg flex items-center justify-center gap-3">
                     Zur Speisekarte <i class="fas fa-chevron-down"></i>
                 </a>
@@ -313,6 +419,7 @@
             <div class="sticky top-20 z-30 bg-venezia-black/95 backdrop-blur-md pt-4 pb-4 border-b border-gray-800 mb-8 -mx-4 px-4 sm:mx-0 sm:px-0">
                 <div class="flex overflow-x-auto hide-scroll gap-3" id="category-tabs">
                     <button class="cat-btn px-6 py-2.5 rounded-full text-sm font-bold uppercase tracking-wider transition-all bg-venezia-orange text-venezia-black" data-cat="all">Alle</button>
+                    <button class="cat-btn px-6 py-2.5 rounded-full text-sm font-bold uppercase tracking-wider transition-all bg-venezia-dark text-gray-400 border border-gray-700 hover:text-venezia-light hover:border-venezia-orange" data-cat="menue">Menüs</button>
                     <button class="cat-btn px-6 py-2.5 rounded-full text-sm font-bold uppercase tracking-wider transition-all bg-venezia-dark text-gray-400 border border-gray-700 hover:text-venezia-light hover:border-venezia-orange" data-cat="pizza">Pizza</button>
                     <button class="cat-btn px-6 py-2.5 rounded-full text-sm font-bold uppercase tracking-wider transition-all bg-venezia-dark text-gray-400 border border-gray-700 hover:text-venezia-light hover:border-venezia-orange" data-cat="pasta">Nudeln</button>
                     <button class="cat-btn px-6 py-2.5 rounded-full text-sm font-bold uppercase tracking-wider transition-all bg-venezia-dark text-gray-400 border border-gray-700 hover:text-venezia-light hover:border-venezia-orange" data-cat="salat">Salate</button>
@@ -345,7 +452,8 @@
                         Hauptstraße 4<br>
                         32257 Bünde<br><br>
                         <span class="text-venezia-orange font-bold text-lg"><i class="fas fa-phone mr-2"></i>0 52 23 / 49 38 38</span><br>
-                        <span>Fax: 0 52 23 / 49 38 39</span>
+                        <span class="text-venezia-orange font-bold text-lg"><i class="fas fa-phone mr-2"></i>0 52 23 / 49 38 29</span><br>
+                        <span>Fax: 0 52 23 / 49 38 49</span>
                     </p>
                 </div>
                 <div class="flex flex-col items-center md:items-start">
@@ -354,7 +462,7 @@
                     </div>
                     <h4 class="text-venezia-light font-bold uppercase tracking-wider mb-2">Lieferung</h4>
                     <p class="text-gray-400 text-sm mb-2 leading-relaxed">Wir bringen das Essen frisch und heiß zu Ihnen nach Hause.</p>
-                    <p class="text-gray-400 text-sm"><span class="text-venezia-light">Mindestbestellwert:</span> ab 15.00€<br><span class="text-venezia-light">Liefergebühr:</span> 2.50€</p>
+                    <p class="text-gray-400 text-sm"><span class="text-venezia-light">Mindestbestellwert:</span> ab 15.00€<br><span class="text-venezia-light">Liefergebühr:</span> 2.50€ - 4.00€ <br><span class="text-xs italic">(je nach Entfernung)</span></p>
                     <p class="text-xs text-venezia-orange mt-2 italic">Hinweis: 30 Min vor Ladenschluss nur noch Abholung möglich.</p>
                 </div>
                 <div class="flex flex-col items-center md:items-start">
@@ -391,7 +499,7 @@
             const iDessert = 'https://images.unsplash.com/photo-1563805042-7684c8a9e9cb?w=600&q=80';
             const iWine = 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=600&q=80';
 
-            // Spezifische Getränke-Bilder (Deine Dateinamen)
+            // Spezifische Getränke-Bilder
             const iBier = 'ChatGPT Image 4. Juni 2026, 18_36_59 (1).png';
             const iMalz = 'ChatGPT Image 4. Juni 2026, 18_36_59 (2).png';
             const iWasser = 'ChatGPT Image 4. Juni 2026, 18_37_04 (1).png';
@@ -399,6 +507,7 @@
 
             function getFallbackImg(cat) {
                 switch(cat) {
+                    case 'menue': return iPizza;
                     case 'pizza': return iPizza;
                     case 'pasta': return iPasta;
                     case 'salat': return iSalat;
@@ -422,6 +531,13 @@
                 {id:'p43c', num:'43c', cat:'pizza', name:'Pizza Mozzarella', price:11.00, desc:'frische Tomaten, Mozzarella und Basilikum', img:iPizza},
                 {id:'p142', num:'142', cat:'pizza', name:'Pizza Vegetaria', price:10.50, desc:'Tomaten, Käse, Paprika, Spargel, Champignons, Artischocken', img:iPizza},
                 {id:'p142a', num:'142a', cat:'pizza', name:'Pizza Fantastica', price:10.50, desc:'Tomaten, Hirtenkäse, Spinat, Spargel, Mais', img:iPizza},
+
+                // === MENÜS ===
+                {id:'mm1', num:'M1', cat:'menue', name:'Mittagsmenü 1', price:8.00, desc:'1x kleine Pizza (2 Zutaten) ODER kleines Nudelgericht + Salat (Nr.32) ODER Softdrink (0,33l). Nur Mo, Mi-Fr 11:30-14:00', img:iPizza},
+                {id:'mm3', num:'M3', cat:'menue', name:'Mittagsmenü 3', price:8.00, desc:'1x Schweineschnitzel ODER Gyros Teller + Salat (Nr.32) ODER Softdrink (0,33l). Nur Mo, Mi-Fr 11:30-14:00', img:iFleisch},
+                {id:'mm6', num:'M6', cat:'menue', name:'Mittagsmenü 6', price:9.00, desc:'1x normale Pizza ODER Nudelgericht + Salat (Nr.32) ODER Softdrink (0,33l). Nur Mo, Mi-Fr 11:30-14:00', img:iPizza},
+                {id:'tm1', num:'TM1', cat:'menue', name:'Tages Menü 1', price:26.00, desc:'2x Jumbo Pizza + 1x Insalata Mista (Nr.32)', img:iPizza},
+                {id:'tm2', num:'TM2', cat:'menue', name:'Tages Menü 2', price:19.00, desc:'2x normale Pizza ODER 2x Nudelgericht', img:iPasta},
 
                 // === PIZZA FLEISCH ===
                 {id:'p35', num:'35', cat:'pizza', name:'Pizza Salami', price:8.50, desc:'Tomaten, Käse, Salami', img:iPizza},
@@ -651,7 +767,81 @@
                 }
             ];
 
+            // --- DYNAMISCHE MENÜ-OPTIONEN GENERIEREN ---
+            const excludedPastas = ['62b', '63b', '96', '96a'];
+            const excludedPastasTM2 = ['63b', '96a'];
+            
+            const pizzaOptionsNormal = menuItems.filter(i => i.cat === 'pizza').map((i, idx) => ({ id: i.id, name: i.num + ' - ' + i.name, priceDiff: 0, default: idx === 0 }));
+            const pizzaOptionsEx146 = menuItems.filter(i => i.cat === 'pizza' && i.num !== '146').map((i, idx) => ({ id: i.id, name: i.num + ' - ' + i.name, priceDiff: 0, default: idx === 0 }));
+            
+            const pastaOptionsEx = menuItems.filter(i => i.cat === 'pasta' && !excludedPastas.includes(i.num)).map(i => ({ id: i.id, name: i.num + ' - ' + i.name, priceDiff: 0, default: false }));
+            const pastaOptionsExTM2 = menuItems.filter(i => i.cat === 'pasta' && !excludedPastasTM2.includes(i.num)).map(i => ({ id: i.id, name: i.num + ' - ' + i.name, priceDiff: 0, default: false }));
+
+            const salatDrinkOptions = [
+                { id: 'sd_s32', name: '32 - Insalata Mista (klein)', priceDiff: 0, default: true },
+                { id: 'sd_cola', name: 'Coca-Cola (0,33l)', priceDiff: 0 },
+                { id: 'sd_fanta', name: 'Fanta (0,33l)', priceDiff: 0 },
+                { id: 'sd_sprite', name: 'Sprite (0,33l)', priceDiff: 0 },
+                { id: 'sd_wasser', name: 'Mineralwasser (0,33l)', priceDiff: 0 }
+            ];
+
+            const schnitzelGyrosOptions = [
+                { id: 'sg_77', name: '77 - Cotoletta alla Milanese (Schweineschnitzel)', priceDiff: 0, default: true },
+                { id: 'sg_356', name: '356 - Gyrosteller Speziale', priceDiff: 0, default: false }
+            ];
+
+            const hauptgerichtMM1 = [
+                { id: 'mm1_p_wahl', name: 'Kleine Pizza (2 Zutaten) - Bitte Anmerkung nutzen!', priceDiff: 0, default: true },
+                ...pastaOptionsEx.map(p => ({ ...p, name: p.name + ' (klein)' }))
+            ];
+
+            const hauptgerichtMM6 = [
+                ...pizzaOptionsEx146.map((p, index) => ({ ...p, name: p.name + ' (normal)', default: index === 0 })),
+                ...pastaOptionsEx.map(p => ({ ...p, name: p.name + ' (normal)' }))
+            ];
+
+            const hauptgerichtTM2 = [
+                ...pizzaOptionsNormal.map((p, index) => ({ ...p, name: p.name + ' (normal)', default: index === 0 })),
+                ...pastaOptionsExTM2.map(p => ({ ...p, name: p.name + ' (normal)' }))
+            ];
+
+            const mm1 = menuItems.find(i => i.id === 'mm1');
+            if(mm1) mm1.variants = [
+                { id: 'mm1_h', name: 'Hauptgericht wählen', type: 'select', options: hauptgerichtMM1 },
+                { id: 'mm1_b', name: 'Beilage / Getränk wählen', type: 'select', options: salatDrinkOptions }
+            ];
+
+            const mm3 = menuItems.find(i => i.id === 'mm3');
+            if(mm3) mm3.variants = [
+                { id: 'mm3_h', name: 'Hauptgericht wählen', type: 'select', options: schnitzelGyrosOptions },
+                { id: 'mm3_b', name: 'Beilage / Getränk wählen', type: 'select', options: salatDrinkOptions }
+            ];
+
+            const mm6 = menuItems.find(i => i.id === 'mm6');
+            if(mm6) mm6.variants = [
+                { id: 'mm6_h', name: 'Hauptgericht wählen', type: 'select', options: hauptgerichtMM6 },
+                { id: 'mm6_b', name: 'Beilage / Getränk wählen', type: 'select', options: salatDrinkOptions }
+            ];
+
+            const tm1 = menuItems.find(i => i.id === 'tm1');
+            if(tm1) tm1.variants = [
+                { id: 'tm1_p1', name: '1. Jumbo Pizza wählen', type: 'select', options: pizzaOptionsEx146.map(p => ({ ...p, name: p.name + ' (Jumbo)' })) },
+                { id: 'tm1_p2', name: '2. Jumbo Pizza wählen', type: 'select', options: pizzaOptionsEx146.map(p => ({ ...p, name: p.name + ' (Jumbo)' })) },
+                { id: 'tm1_b', name: 'Salat', type: 'select', options: [{ id: 'tm1_s32', name: '32 - Insalata Mista', priceDiff: 0, default: true }] }
+            ];
+
+            const tm2 = menuItems.find(i => i.id === 'tm2');
+            if(tm2) tm2.variants = [
+                { id: 'tm2_h1', name: '1. Gericht wählen', type: 'select', options: hauptgerichtTM2 },
+                { id: 'tm2_h2', name: '2. Gericht wählen', type: 'select', options: hauptgerichtTM2 }
+            ];
+
             const categoryExtras = {
+                menue: [
+                    { id: 'ex_m1', name: 'Pizzabrot dazu', price: 3.50 },
+                    { id: 'ex_m2', name: 'Kräuterbutter dazu', price: 1.00 },
+                    { id: 'ex_m3', name: 'Extra Dressing', price: 1.00 }
+                ],
                 pizza: [
                     { id: 'ex_p1', name: 'Käse', price: 1.50 },
                     { id: 'ex_p2', name: 'Salami', price: 1.50 },
@@ -673,7 +863,6 @@
 
             let cart = [];
             let isDelivery = true;
-            const DELIVERY_FEE = 2.50;
             const MIN_ORDER_DELIVERY = 15.00;
             
             let currentProduct = null;
@@ -690,6 +879,8 @@
             const cartItemsContainer = document.getElementById('cart-items-container');
             const emptyCartMsg = document.getElementById('empty-cart-msg');
             const checkoutBtn = document.getElementById('checkout-btn');
+
+            const navAccountIcon = document.getElementById('nav-account-icon');
 
             const btnDelivery = document.getElementById('type-delivery');
             const btnPickup = document.getElementById('type-pickup');
@@ -728,7 +919,7 @@
                     
                     card.innerHTML = `
                         <div class="relative h-48 overflow-hidden bg-black">
-                            <div class="absolute top-3 left-3 bg-venezia-orange text-venezia-black w-10 h-10 flex items-center justify-center rounded-full font-bold font-display shadow-md z-10">${item.num}</div>
+                            ${item.num !== '-' ? `<div class="absolute top-3 left-3 bg-venezia-orange text-venezia-black w-10 h-10 flex items-center justify-center rounded-full font-bold font-display shadow-md z-10">${item.num}</div>` : ''}
                             <img src="${encodeURI(item.img)}" alt="${item.name}" onerror="this.onerror=null; this.src='${getFallbackImg(item.cat)}';" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100" loading="lazy">
                             <div class="absolute top-3 right-3 bg-venezia-black/80 backdrop-blur-sm text-venezia-light px-3 py-1 rounded font-bold border border-gray-700 shadow-lg">${priceFormatted}</div>
                         </div>
@@ -777,7 +968,14 @@
                 modalImg.onerror = function() { this.onerror=null; this.src=getFallbackImg(product.cat); };
                 modalImg.src = encodeURI(product.img);
                 modalTitle.innerHTML = product.name;
-                modalNum.textContent = product.num;
+                
+                if (product.num !== '-') {
+                    modalNum.textContent = product.num;
+                    modalNum.style.display = 'flex';
+                } else {
+                    modalNum.style.display = 'none';
+                }
+                
                 modalDesc.textContent = product.desc;
                 modalNotes.value = '';
                 modalQtySpan.textContent = currentQty;
@@ -792,31 +990,52 @@
                         variantEl.className = 'mb-6';
                         
                         let optionsHtml = '';
-                        variant.options.forEach(opt => {
-                            const isChecked = opt.default ? 'checked' : '';
-                            if (opt.default) selectedVariants[variant.id] = opt;
-                            const priceLabel = opt.priceDiff > 0 ? `(+${opt.priceDiff.toFixed(2)}€)` : '';
-                            
-                            optionsHtml += `
-                                <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-700 bg-venezia-black hover:border-gray-500 cursor-pointer transition-all has-[:checked]:border-venezia-orange has-[:checked]:bg-venezia-orange has-[:checked]:text-venezia-black text-venezia-light">
-                                    <input type="radio" name="var_${variant.id}" value="${opt.id}" class="custom-radio variant-radio" data-variant-id="${variant.id}" data-option-id="${opt.id}" ${isChecked}>
-                                    <div class="flex flex-col flex-1">
-                                        <span class="text-sm font-medium">${opt.name} <span class="text-xs ml-1 opacity-70">${priceLabel}</span></span>
-                                    </div>
-                                </label>
+                        
+                        if (variant.type === 'radio') {
+                            variant.options.forEach(opt => {
+                                const isChecked = opt.default ? 'checked' : '';
+                                if (opt.default) selectedVariants[variant.id] = opt;
+                                const priceLabel = opt.priceDiff > 0 ? `(+${opt.priceDiff.toFixed(2)}€)` : '';
+                                
+                                optionsHtml += `
+                                    <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-700 bg-venezia-black hover:border-gray-500 cursor-pointer transition-all has-[:checked]:border-venezia-orange has-[:checked]:bg-venezia-orange has-[:checked]:text-venezia-black text-venezia-light">
+                                        <input type="radio" name="var_${variant.id}" value="${opt.id}" class="custom-radio variant-radio" data-variant-id="${variant.id}" data-option-id="${opt.id}" ${isChecked}>
+                                        <div class="flex flex-col flex-1">
+                                            <span class="text-sm font-medium">${opt.name} <span class="text-xs ml-1 opacity-70">${priceLabel}</span></span>
+                                        </div>
+                                    </label>
+                                `;
+                            });
+                            variantEl.innerHTML = `
+                                <div class="flex justify-between items-end mb-3 border-b border-gray-800 pb-2">
+                                    <h4 class="font-bold text-lg text-venezia-light">${variant.name}</h4>
+                                    <span class="text-xs text-venezia-orange bg-venezia-orange/10 px-2 py-1 rounded font-bold border border-venezia-orange/30">Auswahl</span>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${optionsHtml}</div>
                             `;
-                        });
-
-                        variantEl.innerHTML = `
-                            <div class="flex justify-between items-end mb-3 border-b border-gray-800 pb-2">
-                                <h4 class="font-bold text-lg text-venezia-light">${variant.name}</h4>
-                                <span class="text-xs text-venezia-orange bg-venezia-orange/10 px-2 py-1 rounded font-bold border border-venezia-orange/30">Auswahl</span>
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${optionsHtml}</div>
-                        `;
+                        } else if (variant.type === 'select') {
+                            // NEU: Für Menüs mit sehr vielen Auswahlmöglichkeiten (Pizzen etc)
+                            variant.options.forEach(opt => {
+                                const isSelected = opt.default ? 'selected' : '';
+                                if (opt.default && !selectedVariants[variant.id]) selectedVariants[variant.id] = opt;
+                                const priceLabel = opt.priceDiff > 0 ? ` (+${opt.priceDiff.toFixed(2)}€)` : '';
+                                optionsHtml += `<option value="${opt.id}" ${isSelected}>${opt.name}${priceLabel}</option>`;
+                            });
+                            variantEl.innerHTML = `
+                                <div class="flex justify-between items-end mb-2 border-b border-gray-800 pb-2">
+                                    <h4 class="font-bold text-sm text-venezia-light">${variant.name}</h4>
+                                    <span class="text-xs text-venezia-orange bg-venezia-orange/10 px-2 py-1 rounded font-bold border border-venezia-orange/30">Wahl</span>
+                                </div>
+                                <select class="variant-select w-full bg-venezia-black border border-gray-700 text-venezia-light text-sm rounded p-3 focus:outline-none focus:border-venezia-orange transition-colors cursor-pointer" data-variant-id="${variant.id}">
+                                    ${optionsHtml}
+                                </select>
+                            `;
+                        }
+                        
                         variantsSection.appendChild(variantEl);
                     });
 
+                    // Event Listeners für Radios
                     document.querySelectorAll('.variant-radio').forEach(radio => {
                         radio.addEventListener('change', (e) => {
                             const varId = e.target.dataset.variantId;
@@ -827,6 +1046,19 @@
                             updateModalPrice();
                         });
                     });
+
+                    // Event Listeners für Selects
+                    document.querySelectorAll('.variant-select').forEach(select => {
+                        select.addEventListener('change', (e) => {
+                            const varId = e.target.dataset.variantId;
+                            const optId = e.target.value;
+                            const variantObj = currentProduct.variants.find(v => v.id === varId);
+                            const optionObj = variantObj.options.find(o => o.id === optId);
+                            selectedVariants[varId] = optionObj;
+                            updateModalPrice();
+                        });
+                    });
+
                 } else {
                     variantsSection.classList.add('hidden');
                 }
@@ -914,12 +1146,10 @@
                 const notesStr = modalNotes.value.trim();
                 const cartItemId = `${currentProduct.id}_${varIdsStr}_${extraIds}_${btoa(encodeURIComponent(notesStr)).substring(0,10)}`;
 
-                let displayName = currentProduct.name;
-                if (variantNames.length > 0) displayName += ` (${variantNames.join(', ')})`;
-
                 const cartItem = {
-                    instanceId: cartItemId, productId: currentProduct.id, name: displayName,
-                    unitPrice: unitPrice, quantity: currentQty, extras: [...selectedExtras], notes: notesStr
+                    instanceId: cartItemId, productId: currentProduct.id, name: currentProduct.name,
+                    unitPrice: unitPrice, quantity: currentQty, extras: [...selectedExtras], 
+                    variants: variantNames, notes: notesStr
                 };
 
                 const existingIndex = cart.findIndex(item => item.instanceId === cartItemId);
@@ -966,7 +1196,7 @@
                 btnDelivery.classList.replace('bg-venezia-orange', 'bg-transparent');
                 btnDelivery.classList.replace('text-venezia-black', 'text-gray-400');
                 document.getElementById('delivery-fee-row').classList.add('hidden');
-                deliveryInfoText.textContent = "Abholung. Kein Mindestbestellwert.";
+                deliveryInfoText.textContent = "Abholung in der Filiale. Kein Mindestbestellwert.";
                 updateCartUI();
             });
 
@@ -990,6 +1220,12 @@
                 } else {
                     emptyCartMsg.style.display = 'none';
                     cart.forEach(item => {
+                        let variantsHtml = '';
+                        if (item.variants && item.variants.length > 0) {
+                            const vNames = item.variants.map(v => `<i class="fas fa-check text-[8px] mr-1"></i> ${v}`).join('<br>');
+                            variantsHtml = `<div class="text-xs text-venezia-orange mt-1 pl-2 border-l border-venezia-orange/30">${vNames}</div>`;
+                        }
+                        
                         let extrasHtml = item.extras.length > 0 ? `<div class="text-xs text-gray-400 mt-1 pl-2 border-l border-gray-600">${item.extras.map(e => `+ ${e.name}`).join('<br>')}</div>` : '';
                         let notesHtml = item.notes ? `<div class="text-xs text-venezia-orange italic mt-1 break-words"><i class="fas fa-comment-alt text-[10px] mr-1"></i> ${item.notes}</div>` : '';
 
@@ -997,7 +1233,7 @@
                         itemEl.className = 'flex flex-col p-3 bg-venezia-black border border-gray-800 rounded-lg shadow-sm';
                         itemEl.innerHTML = `
                             <div class="flex justify-between items-start mb-2">
-                                <div class="flex-1 pr-2"><h4 class="text-venezia-light font-bold text-sm leading-tight">${item.name}</h4>${extrasHtml}${notesHtml}</div>
+                                <div class="flex-1 pr-2"><h4 class="text-venezia-light font-bold text-sm leading-tight">${item.name}</h4>${variantsHtml}${extrasHtml}${notesHtml}</div>
                                 <div class="font-bold text-venezia-light text-right text-sm">${(item.unitPrice * item.quantity).toFixed(2)}€</div>
                             </div>
                             <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-800/50">
@@ -1017,21 +1253,20 @@
                 }
 
                 document.getElementById('cart-subtotal').textContent = `${subtotal.toFixed(2)}€`;
-                let total = subtotal;
+                let total = subtotal; // Nur Speisen und Getränke
                 let canCheckout = false;
 
                 if (isDelivery) {
-                    if (subtotal > 0) { total += DELIVERY_FEE; document.getElementById('cart-delivery-fee').textContent = `${DELIVERY_FEE.toFixed(2)}€`; } 
-                    else { document.getElementById('cart-delivery-fee').textContent = `0.00€`; }
-                    
                     if (subtotal >= MIN_ORDER_DELIVERY) {
                         canCheckout = true; deliveryInfoText.innerHTML = `<span class="text-green-500 font-bold"><i class="fas fa-check-circle mr-1"></i> Mindestbestellwert erreicht.</span>`;
                     } else if (subtotal > 0) {
                         deliveryInfoText.innerHTML = `<span class="text-venezia-orange"><i class="fas fa-exclamation-circle mr-1"></i> Noch ${(MIN_ORDER_DELIVERY - subtotal).toFixed(2)}€ bis zur Lieferung.</span>`;
                     } else {
-                         deliveryInfoText.textContent = `Mindestbestellwert Lieferung: ${MIN_ORDER_DELIVERY.toFixed(2)}€`;
+                         deliveryInfoText.textContent = `Mindestbestellwert für Lieferung: ${MIN_ORDER_DELIVERY.toFixed(2)}€`;
                     }
-                } else { canCheckout = subtotal > 0; }
+                } else { 
+                    canCheckout = subtotal > 0; 
+                }
 
                 document.getElementById('cart-total').textContent = `${total.toFixed(2)}€`;
                 checkoutBtn.disabled = !canCheckout;
@@ -1047,12 +1282,215 @@
                 }
             }
 
-            updateCartUI();
+            // --- Checkout Logic ---
+            const checkoutModal = document.getElementById('checkout-modal');
+            const checkoutModalBg = document.getElementById('checkout-modal-bg');
+            const closeCheckoutBtn = document.getElementById('close-checkout-btn');
+            const checkoutTypeText = document.getElementById('checkout-type-text');
+            const coAddressFields = document.getElementById('co-address-fields');
+            const checkoutFinalTotal = document.getElementById('checkout-final-total');
+            const checkoutForm = document.getElementById('checkout-form');
+            const checkoutFeeNotice = document.getElementById('checkout-fee-notice');
+
+            // Auth Modal Elements
+            const authModal = document.getElementById('auth-modal');
+            const authModalBg = document.getElementById('auth-modal-bg');
+            const closeAuthBtn = document.getElementById('close-auth-btn');
+            const authTitle = document.getElementById('auth-title');
+            const loginFormContainer = document.getElementById('login-form-container');
+            const registerFormContainer = document.getElementById('register-form-container');
+            const showRegisterBtn = document.getElementById('show-register');
+            const showLoginBtn = document.getElementById('show-login');
+            const doLoginBtn = document.getElementById('do-login-btn');
+            const doRegisterBtn = document.getElementById('do-register-btn');
+            const guestCheckoutBtn = document.getElementById('guest-checkout-btn');
             
-            checkoutBtn.addEventListener('click', () => {
-                alert("Weiterleitung zur Kasse...\n(Dies ist eine Demo. Bestell-Logik in Konsole.)");
-                console.log("Order Data:", {type: isDelivery ? 'Lieferung' : 'Abholung', items: cart, total: document.getElementById('cart-total').textContent});
+            let currentUser = null; // Will hold user object if logged in
+
+            function openCheckout() {
+                closeCart();
+                checkoutFinalTotal.textContent = document.getElementById('cart-total').textContent;
+                
+                // Pre-fill user data if logged in
+                if (currentUser) {
+                    document.getElementById('co-name').value = currentUser.name || '';
+                    document.getElementById('co-phone').value = currentUser.phone || '';
+                    if (isDelivery) {
+                        document.getElementById('co-street').value = currentUser.street || '';
+                        document.getElementById('co-zip').value = currentUser.zip || '';
+                        document.getElementById('co-city').value = currentUser.city || '';
+                    }
+                } else {
+                    document.getElementById('checkout-form').reset();
+                }
+
+                if (isDelivery) {
+                    checkoutTypeText.textContent = 'Lieferung';
+                    coAddressFields.classList.remove('hidden');
+                    document.getElementById('co-street').required = true;
+                    document.getElementById('co-zip').required = true;
+                    document.getElementById('co-city').required = true;
+                    checkoutFeeNotice.classList.remove('hidden');
+                } else {
+                    checkoutTypeText.textContent = 'Abholung';
+                    coAddressFields.classList.add('hidden');
+                    document.getElementById('co-street').required = false;
+                    document.getElementById('co-zip').required = false;
+                    document.getElementById('co-city').required = false;
+                    checkoutFeeNotice.classList.add('hidden');
+                }
+
+                checkoutModal.classList.remove('hidden');
+                setTimeout(() => checkoutModal.classList.remove('opacity-0'), 10);
+                document.body.style.overflow = 'hidden';
+            }
+
+            // Auth Logic
+            function openAuthModal() {
+                closeCart();
+                authModal.classList.remove('hidden');
+                setTimeout(() => {
+                    authModal.classList.remove('opacity-0');
+                    authModal.querySelector('.modal-content').classList.remove('scale-95');
+                    authModal.querySelector('.modal-content').classList.add('scale-100');
+                }, 10);
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeAuthModal() {
+                authModal.classList.add('opacity-0');
+                authModal.querySelector('.modal-content').classList.add('scale-95');
+                authModal.querySelector('.modal-content').classList.remove('scale-100');
+                setTimeout(() => {
+                    authModal.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }, 200);
+            }
+
+            closeAuthBtn.addEventListener('click', closeAuthModal);
+            authModalBg.addEventListener('click', closeAuthModal);
+
+            showRegisterBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                loginFormContainer.classList.add('hidden');
+                registerFormContainer.classList.remove('hidden');
+                authTitle.textContent = 'Konto erstellen';
             });
+
+            showLoginBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                registerFormContainer.classList.add('hidden');
+                loginFormContainer.classList.remove('hidden');
+                authTitle.textContent = 'Anmelden';
+            });
+
+            doLoginBtn.addEventListener('click', () => {
+                const email = document.getElementById('login-email').value;
+                if (!email) return alert('Bitte E-Mail eingeben.');
+                // Mock Login Data
+                currentUser = {
+                    name: "Max Mustermann",
+                    email: email,
+                    phone: "0170 1234567",
+                    street: "Musterstraße 1",
+                    zip: "32257",
+                    city: "Bünde"
+                };
+                updateAccountIcon();
+                closeAuthModal();
+                setTimeout(() => openCheckout(), 300);
+            });
+
+            doRegisterBtn.addEventListener('click', () => {
+                const name = document.getElementById('reg-name').value;
+                const email = document.getElementById('reg-email').value;
+                if (!name || !email) return alert('Bitte alle Pflichtfelder ausfüllen.');
+                // Mock Register
+                currentUser = {
+                    name: name,
+                    email: email,
+                    phone: "",
+                    street: "",
+                    zip: "",
+                    city: ""
+                };
+                updateAccountIcon();
+                closeAuthModal();
+                setTimeout(() => openCheckout(), 300);
+            });
+
+            guestCheckoutBtn.addEventListener('click', () => {
+                closeAuthModal();
+                setTimeout(() => openCheckout(), 300);
+            });
+
+            navAccountIcon.addEventListener('click', () => {
+                if (currentUser) {
+                    alert(`Angemeldet als: ${currentUser.name}\n\n(Hier könnte sich später ein Profilbereich öffnen)`);
+                } else {
+                    openAuthModal();
+                }
+            });
+
+            function updateAccountIcon() {
+                if (currentUser) {
+                    navAccountIcon.classList.add('text-venezia-orange');
+                    navAccountIcon.innerHTML = '<i class="fas fa-user-check text-lg"></i>';
+                }
+            }
+
+            function closeCheckout() {
+                checkoutModal.classList.add('opacity-0');
+                setTimeout(() => {
+                    checkoutModal.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }, 200);
+            }
+
+            checkoutBtn.addEventListener('click', () => {
+                if (!currentUser) {
+                    openAuthModal();
+                } else {
+                    openCheckout();
+                }
+            });
+            closeCheckoutBtn.addEventListener('click', closeCheckout);
+            checkoutModalBg.addEventListener('click', closeCheckout);
+
+            checkoutForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const customerData = {
+                    name: document.getElementById('co-name').value,
+                    phone: document.getElementById('co-phone').value,
+                    notes: document.getElementById('co-notes').value,
+                };
+
+                if (isDelivery) {
+                    customerData.street = document.getElementById('co-street').value;
+                    customerData.zip = document.getElementById('co-zip').value;
+                    customerData.city = document.getElementById('co-city').value;
+                }
+
+                const orderData = {
+                    type: isDelivery ? 'Lieferung' : 'Abholung',
+                    items: cart,
+                    total: checkoutFinalTotal.textContent,
+                    customer: customerData
+                };
+
+                console.log("Bestellung erfolgreich generiert:", orderData);
+                alert("Vielen Dank für Ihre Bestellung!\nDie Daten wurden im Hintergrund verarbeitet.");
+                
+                // Reset everything nach der Bestellung
+                cart = [];
+                updateCartUI();
+                checkoutForm.reset();
+                closeCheckout();
+            });
+
+            // Initial UI Update
+            updateCartUI();
         });
     </script>
 </body>
